@@ -527,22 +527,14 @@ export default function ApexFooter() {
     handCtrl.set({ rotate: 3.57, scale: 1, opacity: 1 })
   }, [handCtrl])
 
-  // Defer .is-shown so the browser paints the hidden state first
   useEffect(() => {
-    if (!isInView) return
     if (reducedMotion) {
       setHeadlineShown(true)
       return
     }
-    let frame2 = 0
-    const frame1 = requestAnimationFrame(() => {
-      frame2 = requestAnimationFrame(() => setHeadlineShown(true))
-    })
-    return () => {
-      cancelAnimationFrame(frame1)
-      cancelAnimationFrame(frame2)
-    }
-  }, [isInView, reducedMotion])
+    const t = setTimeout(() => setHeadlineShown(true), 80)
+    return () => clearTimeout(t)
+  }, [reducedMotion])
 
   const visibleBlobs = BLOBS.filter((b) =>
     isMobile ? !b.desktopOnly : !b.mobileOnly
@@ -635,11 +627,11 @@ export default function ApexFooter() {
               width:      handW,
               height:     handH,
               cursor:     'default',
-              opacity:    headlineShown ? 1 : 0,
+              opacity: headlineShown ? 1 : 0,
               transition: reducedMotion
                 ? 'none'
-                : 'opacity var(--stagger-dur) var(--stagger-ease)',
-              transitionDelay: reducedMotion ? undefined : 'var(--stagger-dur)',
+                : 'opacity 600ms cubic-bezier(0.22, 1, 0.36, 1)',
+              transitionDelay: reducedMotion ? undefined : '600ms',
             }}
           >
             <img src={imgHand} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
