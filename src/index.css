@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #181818;
+}
+
+:root {
+  --mouse-sparkles-glow-rgb: 244 255 119;
+}
+
+.mouse-sparkles-glow-point {
+  position: absolute;
+  pointer-events: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: rgb(var(--mouse-sparkles-glow-rgb) / 0.85);
+  box-shadow:
+    0 0 18px 6px rgb(var(--mouse-sparkles-glow-rgb) / 0.35),
+    0 0 40px 12px rgb(var(--mouse-sparkles-glow-rgb) / 0.12);
+}
+
+.mouse-sparkles-star {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  line-height: 1;
+}
+
+@keyframes fall-1 {
+  0% {
+    transform: translate(-50%, -50%) translate(0px, 0px) rotateX(45deg) rotateY(30deg) rotateZ(0deg) scale(0.25);
+    opacity: 0;
+  }
+  5% {
+    transform: translate(-50%, -50%) translate(10px, -10px) rotateX(45deg) rotateY(30deg) rotateZ(0deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(25px, 200px) rotateX(180deg) rotateY(270deg) rotateZ(90deg) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes fall-2 {
+  0% {
+    transform: translate(-50%, -50%) translate(0px, 0px) rotateX(-20deg) rotateY(10deg) scale(0.25);
+    opacity: 0;
+  }
+  10% {
+    transform: translate(-50%, -50%) translate(-10px, -5px) rotateX(-20deg) rotateY(10deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(-10px, 160px) rotateX(-90deg) rotateY(45deg) scale(0.25);
+    opacity: 0;
+  }
+}
+
+@keyframes fall-3 {
+  0% {
+    transform: translate(-50%, -50%) translate(0px, 0px) rotateX(0deg) rotateY(45deg) scale(0.5);
+    opacity: 0;
+  }
+  15% {
+    transform: translate(-50%, -50%) translate(7px, 5px) rotateX(0deg) rotateY(45deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(20px, 120px) rotateX(-180deg) rotateY(-90deg) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mouse-sparkles-glow-point,
+  .mouse-sparkles-star {
+    display: none;
+  }
+}
+
+@layer utilities {
+  .line-through-animate {
+    text-decoration: line-through;
+    transition: text-decoration-color 0.3s ease;
+  }
+}
