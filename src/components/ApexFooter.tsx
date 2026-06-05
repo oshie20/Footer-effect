@@ -521,10 +521,28 @@ export default function ApexFooter() {
   const handCtrl       = useAnimation()
   const isInView       = useInView(footerRef, { once: true, margin: '-8% 0px' })
   const blobsInView    = useInView(blobSectionRef, { once: true, margin: '0px 0px -10% 0px' })
+  const [headlineShown, setHeadlineShown] = useState(false)
 
   useEffect(() => {
     handCtrl.set({ rotate: 3.57, scale: 1, opacity: 1 })
   }, [handCtrl])
+
+  // Defer .is-shown so the browser paints the hidden state first
+  useEffect(() => {
+    if (!isInView) return
+    if (reducedMotion) {
+      setHeadlineShown(true)
+      return
+    }
+    let frame2 = 0
+    const frame1 = requestAnimationFrame(() => {
+      frame2 = requestAnimationFrame(() => setHeadlineShown(true))
+    })
+    return () => {
+      cancelAnimationFrame(frame1)
+      cancelAnimationFrame(frame2)
+    }
+  }, [isInView, reducedMotion])
 
   const visibleBlobs = BLOBS.filter((b) =>
     isMobile ? !b.desktopOnly : !b.mobileOnly
@@ -572,7 +590,7 @@ export default function ApexFooter() {
         {/* ── Headline ─────────────────────────────────────── */}
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
           <h2
-            className={`t-stagger${isInView || reducedMotion ? ' is-shown' : ''}`}
+            className={`t-stagger${headlineShown ? ' is-shown' : ''}`}
             style={{
               fontFamily: 'Phudu, serif',
               fontWeight: 600,
@@ -583,10 +601,9 @@ export default function ApexFooter() {
               width:      'fit-content',
             }}
           >
-            <span className="t-stagger-line t-stagger-line--1">
+            <span className="t-stagger-line">
               Thank you for your curiosity.
-            </span>
-            <span className="t-stagger-line t-stagger-line--2">
+              <br />
               Let's build something cool.
             </span>
           </h2>
@@ -618,10 +635,11 @@ export default function ApexFooter() {
               width:      handW,
               height:     handH,
               cursor:     'default',
-              opacity:    isInView || reducedMotion ? 1 : 0,
+              opacity:    headlineShown ? 1 : 0,
               transition: reducedMotion
                 ? 'none'
-                : 'opacity 600ms cubic-bezier(0.22, 1, 0.36, 1) 640ms',
+                : 'opacity var(--stagger-dur) var(--stagger-ease)',
+              transitionDelay: reducedMotion ? undefined : 'var(--stagger-dur)',
             }}
           >
             <img src={imgHand} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
