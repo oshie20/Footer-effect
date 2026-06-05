@@ -190,11 +190,12 @@ interface BlobTagProps {
   index: number
   isMobile: boolean
   isInView: boolean
+  sectionH: number
   siblingRefs: React.MutableRefObject<(HTMLDivElement | null)[]>
   reducedMotion: boolean
 }
 
-function BlobTag({ config, index, isMobile, isInView, siblingRefs, reducedMotion }: BlobTagProps) {
+function BlobTag({ config, index, isMobile, isInView, sectionH, siblingRefs, reducedMotion }: BlobTagProps) {
   const [hovered, setHovered] = useState(false)
   const outerRef   = useRef<HTMLDivElement>(null)  // sibling reaction target (no Framer Motion)
   const blobRef    = useRef<HTMLDivElement>(null)  // magnetic detection target
@@ -244,7 +245,8 @@ function BlobTag({ config, index, isMobile, isInView, siblingRefs, reducedMotion
     let cancelled = false
     const delay = index * 140
     const initRot = sr(index * 2, -18, 18)
-    const fallY = -dims.h * 0.85
+    // Start above the blob row so the drop reads from off-screen, not a tiny nudge
+    const fallY = -(sectionH * 0.85 + dims.h * 0.35)
 
     const run = async () => {
       if (cancelled || hasEntered.current) return
@@ -467,6 +469,34 @@ function NavColumn({ title, links }: { title: string; links: string[] }) {
   )
 }
 
+const REVEAL_STAGGER_MS = 120
+
+function FooterReveal({
+  children,
+  delay = 0,
+  inView,
+  reducedMotion,
+}: {
+  children: React.ReactNode
+  delay?: number
+  inView: boolean
+  reducedMotion: boolean
+}) {
+  const show = inView || reducedMotion
+
+  return (
+    <div
+      className={show && !reducedMotion ? 'footer-reveal' : undefined}
+      style={{
+        opacity: show ? (reducedMotion ? 1 : undefined) : 0,
+        animationDelay: show && !reducedMotion ? `${delay}ms` : undefined,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
 function Divider({ mobile }: { mobile: boolean }) {
   return (
     <div style={{ width: '100%', height: 1, position: 'relative', transform: 'rotate(0.23deg)', flexShrink: 0 }}>
@@ -493,17 +523,8 @@ export default function ApexFooter() {
   const blobsInView    = useInView(blobSectionRef, { once: true, margin: '0px 0px -10% 0px' })
 
   useEffect(() => {
-    if (!isInView) return
-    if (reducedMotion) {
-      handCtrl.set({ rotate: 3.57, scale: 1, opacity: 1 })
-      return
-    }
-    handCtrl.set({ rotate: 3.57, scale: 0.85, opacity: 0 })
-    handCtrl.start({
-      rotate: 3.57, scale: 1, opacity: 1,
-      transition: { type: 'spring', stiffness: 280, damping: 22, delay: 0.15 },
-    })
-  }, [isInView, reducedMotion, handCtrl])
+    handCtrl.set({ rotate: 3.57, scale: 1, opacity: 1 })
+  }, [handCtrl])
 
   const visibleBlobs = BLOBS.filter((b) =>
     isMobile ? !b.desktopOnly : !b.mobileOnly
@@ -551,6 +572,7 @@ export default function ApexFooter() {
         {/* ── Headline ─────────────────────────────────────── */}
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
           <h2
+            className={`t-stagger${isInView || reducedMotion ? ' is-shown' : ''}`}
             style={{
               fontFamily: 'Phudu, serif',
               fontWeight: 600,
@@ -561,9 +583,12 @@ export default function ApexFooter() {
               width:      'fit-content',
             }}
           >
-            Thank you for your curiosity.
-            <br />
-            Let's build something cool.
+            <span className="t-stagger-line t-stagger-line--1">
+              Thank you for your curiosity.
+            </span>
+            <span className="t-stagger-line t-stagger-line--2">
+              Let's build something cool.
+            </span>
           </h2>
           <motion.div
             data-cursor-skip
@@ -588,58 +613,73 @@ export default function ApexFooter() {
                 transition: { type: 'spring', stiffness: 300, damping: 22 },
               })
             }}
-            style={{ flexShrink: 0, width: handW, height: handH, cursor: 'default' }}
+            style={{
+              flexShrink: 0,
+              width:      handW,
+              height:     handH,
+              cursor:     'default',
+              opacity:    isInView || reducedMotion ? 1 : 0,
+              transition: reducedMotion
+                ? 'none'
+                : 'opacity 600ms cubic-bezier(0.22, 1, 0.36, 1) 640ms',
+            }}
           >
             <img src={imgHand} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
           </motion.div>
         </div>
 
-        <Divider mobile={isMobile} />
+        <FooterReveal inView={isInView} reducedMotion={reducedMotion} delay={REVEAL_STAGGER_MS}>
+          <Divider mobile={isMobile} />
+        </FooterReveal>
 
         {/* ── Brand + Nav ──────────────────────────────────── */}
-        <div
-          style={{
-            display:        'flex',
-            flexDirection:  isMobile ? 'column' : 'row',
-            alignItems:     'flex-start',
-            justifyContent: 'space-between',
-            gap:            isMobile ? 40 : 40,
-          }}
-        >
-          {/* Brand */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <img src={imgIcon} alt="Apex icon" style={{ width: 34, height: 34 }} />
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 24, fontWeight: 400, color: '#fff', lineHeight: 1 }}>
-                Apex<span style={{ color: '#8f8f8f' }}>™</span>
-              </span>
+        <FooterReveal inView={isInView} reducedMotion={reducedMotion} delay={REVEAL_STAGGER_MS * 2}>
+          <div
+            style={{
+              display:        'flex',
+              flexDirection:  isMobile ? 'column' : 'row',
+              alignItems:     'flex-start',
+              justifyContent: 'space-between',
+              gap:            isMobile ? 40 : 40,
+            }}
+          >
+            {/* Brand */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <img src={imgIcon} alt="Apex icon" style={{ width: 34, height: 34 }} />
+                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 24, fontWeight: 400, color: '#fff', lineHeight: 1 }}>
+                  Apex<span style={{ color: '#8f8f8f' }}>™</span>
+                </span>
+              </div>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 16, fontWeight: 500, color: '#8f8f8f', margin: 0, lineHeight: '20px', letterSpacing: '-0.096px' }}>
+                Smarter tools for modern finance teams.
+                <br />
+                All rights reserved.
+              </p>
             </div>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 16, fontWeight: 500, color: '#8f8f8f', margin: 0, lineHeight: '20px', letterSpacing: '-0.096px' }}>
-              Smarter tools for modern finance teams.
-              <br />
-              All rights reserved.
-            </p>
-          </div>
 
-          {/* Nav */}
-          {isMobile ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 32, width: '100%' }}>
-              <div style={{ display: 'flex', gap: 32 }}>
+            {/* Nav */}
+            {isMobile ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 32, width: '100%' }}>
+                <div style={{ display: 'flex', gap: 32 }}>
+                  <NavColumn title="Quick Links" links={['Home', 'About', 'Services', 'Contact']} />
+                  <NavColumn title="Products"    links={['Ai Assistant', 'Mobile App', 'Account', 'Credit Card']} />
+                </div>
+                <NavColumn title="Company" links={['About', 'Privacy Policy', 'Support', 'Terms of Service']} />
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 'clamp(40px, 8vw, 130px)', flexWrap: 'wrap' }}>
                 <NavColumn title="Quick Links" links={['Home', 'About', 'Services', 'Contact']} />
                 <NavColumn title="Products"    links={['Ai Assistant', 'Mobile App', 'Account', 'Credit Card']} />
+                <NavColumn title="Company"     links={['About', 'Privacy Policy', 'Support', 'Terms of Service']} />
               </div>
-              <NavColumn title="Company" links={['About', 'Privacy Policy', 'Support', 'Terms of Service']} />
-            </div>
-          ) : (
-            <div style={{ display: 'flex', gap: 'clamp(40px, 8vw, 130px)', flexWrap: 'wrap' }}>
-              <NavColumn title="Quick Links" links={['Home', 'About', 'Services', 'Contact']} />
-              <NavColumn title="Products"    links={['Ai Assistant', 'Mobile App', 'Account', 'Credit Card']} />
-              <NavColumn title="Company"     links={['About', 'Privacy Policy', 'Support', 'Terms of Service']} />
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </FooterReveal>
 
-        <Divider mobile={isMobile} />
+        <FooterReveal inView={isInView} reducedMotion={reducedMotion} delay={REVEAL_STAGGER_MS * 3}>
+          <Divider mobile={isMobile} />
+        </FooterReveal>
 
         {/* ── Blobs ────────────────────────────────────────── */}
         <div
@@ -650,6 +690,7 @@ export default function ApexFooter() {
             marginLeft: -bleed,
             height:     blobH,
             flexShrink: 0,
+            overflow:   'visible',
           }}
         >
           {visibleBlobs.map((blob, i) => (
@@ -659,6 +700,7 @@ export default function ApexFooter() {
               index={i}
               isMobile={isMobile}
               isInView={blobsInView}
+              sectionH={blobH}
               siblingRefs={blobRefs}
               reducedMotion={reducedMotion}
             />
