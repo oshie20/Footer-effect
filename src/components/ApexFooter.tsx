@@ -243,7 +243,7 @@ function BlobTag({ config, index, isMobile, isInView, sectionH, siblingRefs, red
     if (!isInView || !maskReady) return
 
     let cancelled = false
-    const delay = index * 140
+    const delay = index * 180
     const initRot = sr(index * 2, -18, 18)
     // Start above the blob row so the drop reads from off-screen, not a tiny nudge
     const fallY = -(sectionH * 0.85 + dims.h * 0.35)
@@ -259,7 +259,7 @@ function BlobTag({ config, index, isMobile, isInView, sectionH, siblingRefs, red
       mainCtrl.set({ opacity: 0, y: fallY, scale: 0.94, rotate: initRot })
       await mainCtrl.start({
         opacity: 1, y: 0, scale: 1, rotate: rot,
-        transition: { type: 'spring', stiffness: 260, damping: 16, mass: 0.7 },
+        transition: { type: 'spring', stiffness: 140, damping: 22, mass: 1.05 },
       })
       if (!cancelled) startFloat()
     }
