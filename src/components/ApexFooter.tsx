@@ -217,6 +217,8 @@ function BlobTag({ config, index, isMobile, isInView, siblingRefs, reducedMotion
 
   // Preload mask so fill is visible from the first frame of the fall
   useEffect(() => {
+    setMaskReady(false)
+    hasEntered.current = false
     let cancelled = false
     const img = new Image()
     img.onload = () => { if (!cancelled) setMaskReady(true) }
@@ -481,18 +483,14 @@ function Divider({ mobile }: { mobile: boolean }) {
 export default function ApexFooter() {
   const reducedMotion = useReducedMotion() ?? false
   const isMobile      = useIsMobile(640)
-  const footerRef     = useRef<HTMLDivElement>(null)
-  const cardRef       = useRef<HTMLDivElement>(null)
+  const footerRef      = useRef<HTMLDivElement>(null)
+  const cardRef        = useRef<HTMLDivElement>(null)
+  const blobSectionRef = useRef<HTMLDivElement>(null)
   const cursorLayerRef = useRef<HTMLDivElement>(null)
-  const blobRefs      = useRef<(HTMLDivElement | null)[]>([])
-  const handCtrl      = useAnimation()
-  const isInView      = useInView(footerRef, { once: true, margin: '-8% 0px' })
-  const [hasLanded, setHasLanded] = useState(false)
-
-  useEffect(() => {
-    const t = setTimeout(() => setHasLanded(true), 80)
-    return () => clearTimeout(t)
-  }, [])
+  const blobRefs       = useRef<(HTMLDivElement | null)[]>([])
+  const handCtrl       = useAnimation()
+  const isInView       = useInView(footerRef, { once: true, margin: '-8% 0px' })
+  const blobsInView    = useInView(blobSectionRef, { once: true, margin: '0px 0px -10% 0px' })
 
   useEffect(() => {
     if (!isInView) return
@@ -551,7 +549,7 @@ export default function ApexFooter() {
         />
         <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', gap: isMobile ? 39 : 50 }}>
         {/* ── Headline ─────────────────────────────────────── */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, width: '100%' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
           <h2
             style={{
               fontFamily: 'Phudu, serif',
@@ -560,7 +558,7 @@ export default function ApexFooter() {
               color:      '#fff',
               margin:     0,
               lineHeight: 1.15,
-              flex:       1,
+              width:      'fit-content',
             }}
           >
             Thank you for your curiosity.
@@ -645,6 +643,7 @@ export default function ApexFooter() {
 
         {/* ── Blobs ────────────────────────────────────────── */}
         <div
+          ref={blobSectionRef}
           style={{
             position:   'relative',
             width:      `calc(100% + ${bleed * 2}px)`,
@@ -659,7 +658,7 @@ export default function ApexFooter() {
               config={blob}
               index={i}
               isMobile={isMobile}
-              isInView={hasLanded}
+              isInView={blobsInView}
               siblingRefs={blobRefs}
               reducedMotion={reducedMotion}
             />
